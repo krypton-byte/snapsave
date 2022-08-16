@@ -91,8 +91,8 @@ class Quality(Enum):
         raise KeyError
 
     @property
-    def type(self):
-        return self.AUDIO if isinstance(self.value, str) else Type.VIDEO
+    def type(self) -> Type:
+        return Type.AUDIO if isinstance(self.value, str) else Type.VIDEO
 
     def __gt__(self, comp: Quality):
         return self.value > comp.value
@@ -112,23 +112,23 @@ class FacebookVideo(AsyncClient):
         self.render = render in ['HD', 'SD', 'AUDIO'] or render
         self.file_size = file_size
 
-    def __gt__(self, comp: FacebookVideo):
+    def __gt__(self, comp: FacebookVideo) -> bool:
         return self.quality != Quality.AUDIO and (
             self.quality > comp.quality) and not self.render
 
     @property
-    def is_sd(self):
+    def is_sd(self) -> bool:
         return self.quality == Quality._360P and not self.render
 
     @property
-    def is_hd(self):
+    def is_hd(self) -> bool:
         return self.quality == Quality._720P and not self.render
 
     @property
-    def is_audio(self):
+    def is_audio(self) -> bool:
         return self.quality == Quality.AUDIO
 
-    async def get_size(self):
+    async def get_size(self) -> int:
         return self.file_size or int((
             await self.stream(
                 'GET',
@@ -140,7 +140,7 @@ class FacebookVideo(AsyncClient):
         self,
         out: Union[BufferedWriter, BytesIO, DownloadCallback],
         chunk_size: int = int(1024*0.5)
-    ):
+    ) -> None:
         async with self.stream('GET', self.url_v) as request:
             if isinstance(out, DownloadCallback):
                 tasks = []
@@ -167,7 +167,7 @@ class Fb(AsyncClient):
             'Chrome/101.0.4994.167 Safari/537.36'
         }
 
-    async def from_url(self, url: str):
+    async def from_url(self, url: str) -> list[FacebookVideo]:
         await self.get('https://snapsave.app/id')
         resp = await self.post(
             'https://snapsave.app/action.php?lang=id',
@@ -188,7 +188,7 @@ class Fb(AsyncClient):
         ))
         return await self.extract_content(dec)
 
-    async def extract_content(self, src: str):
+    async def extract_content(self, src: str) -> list[FacebookVideo]:
         data = []
         n = Regex.TABLE.findall(src)[0].replace('\\"', '"')
         for url, res, render in zip(
@@ -210,7 +210,7 @@ class Fb(AsyncClient):
             ))
         return sorted_video(data)
 
-    async def from_html(self, html: str):
+    async def from_html(self, html: str) -> list[FacebookVideo]:
         open('ind.html', 'w').write(html)
         resp = await self.post(
             'https://snapsave.app/download-private-video',
