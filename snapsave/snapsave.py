@@ -13,7 +13,6 @@ from enum import Enum
 def translate(text: str) -> bool:
     return text.lower() in ['iya', 'yes']
 
-
 class Regex:
     URL_FILTER = re.compile(r'(https?://[\w+&=\.%\-_/?;]+)')
     ORIGIN_URL = re.compile(r'https?://[\w\.-]+/')
@@ -23,6 +22,7 @@ class Regex:
     FROM_SNAPAPP = re.compile(r'^https?://snapsave\.app')
     QUALITY = re.compile(r'"video-quality">(\d+|Audio|HD|SD)')
     DECODER_ARGS = re.compile(r'\(\".*?,.*?,.*?,.*?,.*?.*?\)')
+    COVER = re.compile(r'<img src=[\\]?"([\w://\.\=&?-]+)')
 
 
 def sorted_video(videos: list[FacebookVideo]) -> list[FacebookVideo]:
@@ -157,6 +157,11 @@ class FacebookVideo(AsyncClient):
         return f'{self.quality.value}::render={self.render}' + ('::'+[
             'SD', 'HD'][self.is_hd] if self.is_hd or self.is_sd else '')
 
+class Videos(list):
+    def __init__(self, cover: str):
+        super().__init__()
+        self.cover = cover
+
 
 class Fb(AsyncClient):
 
@@ -190,7 +195,7 @@ class Fb(AsyncClient):
         return await self.extract_content(dec)
 
     async def extract_content(self, src: str) -> list[FacebookVideo]:
-        data = []
+        data = Videos(Regex.COVER.findall(src)[0])
         n = Regex.TABLE.findall(src)[0].replace('\\"', '"')
         for url, res, render in zip(
             Regex.URL_FILTER.findall(n),

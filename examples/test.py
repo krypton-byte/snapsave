@@ -18,10 +18,12 @@ class Download(DownloadCallback):
         print(f'Download: %s          ' % ((int(self.clength/self.length * 100)).__str__() + '%'), end='\r')
     async def on_finish(self, client: httpx.AsyncClient, response: httpx.Response):
         self.io.seek(0)
+
 async def main(url):
     vid = await Fb().from_url(url)
     print(vid)
     dd = Download(await vid[1].get_size())
     await vid[1].download(dd)
     open('video.mp4','wb').write(dd.io.getvalue())
+
 asyncio.run(main(url)) #type: ignore
