@@ -211,7 +211,6 @@ class Fb(AsyncClient):
         return sorted_video(data)
 
     async def from_html(self, html: str) -> list[FacebookVideo]:
-        open('ind.html', 'w').write(html)
         resp = await self.post(
             'https://snapsave.app/download-private-video',
             data={
