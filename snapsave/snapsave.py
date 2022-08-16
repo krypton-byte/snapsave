@@ -1,5 +1,5 @@
 from __future__ import annotations
-from asyncio.tasks import ensure_future
+from asyncio.tasks import ensure_future, gather
 from io import BufferedWriter, BytesIO
 from ast import literal_eval
 from typing import Any, Literal, Optional, Union
@@ -147,6 +147,7 @@ class FacebookVideo(AsyncClient):
                 await out.on_open(self, request)
                 async for i in request.aiter_bytes(chunk_size):
                     tasks.append(ensure_future(out.on_progress(i)))
+                await gather(*tasks)
                 await out.on_finish(self, request)
             else:
                 async for i in request.aiter_bytes(chunk_size):
