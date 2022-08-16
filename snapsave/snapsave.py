@@ -10,7 +10,7 @@ import re
 from enum import Enum
 
 
-def translate(text: str):
+def translate(text: str) -> bool:
     return text.lower() in ['iya', 'yes']
 
 
@@ -94,7 +94,7 @@ class Quality(Enum):
     def type(self) -> Type:
         return Type.AUDIO if isinstance(self.value, str) else Type.VIDEO
 
-    def __gt__(self, comp: Quality):
+    def __gt__(self, comp: Quality) -> Quality:
         return self.value > comp.value
 
 
