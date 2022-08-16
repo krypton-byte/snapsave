@@ -2,7 +2,7 @@ from __future__ import annotations
 from asyncio.tasks import ensure_future, gather
 from io import BufferedWriter, BytesIO
 from ast import literal_eval
-from typing import Any, Literal, Optional, Union
+from typing import Any, Generator, Literal, Optional, Union
 import httpx
 from httpx import AsyncClient
 from .decoder import decoder
@@ -12,6 +12,7 @@ from enum import Enum
 
 def translate(text: str) -> bool:
     return text.lower() in ['iya', 'yes']
+
 
 class Regex:
     URL_FILTER = re.compile(r'(https?://[\w+&=\.%\-_/?;]+)')
@@ -134,7 +135,7 @@ class FacebookVideo(AsyncClient):
                 'GET',
                 self.url_v
             ).__aenter__()
-        ).headers["Content-Length"])
+        ).headers.get("Content-Length", 0))
 
     async def download(
         self,
@@ -157,10 +158,18 @@ class FacebookVideo(AsyncClient):
         return f'{self.quality.value}::render={self.render}' + ('::'+[
             'SD', 'HD'][self.is_hd] if self.is_hd or self.is_sd else '')
 
+
 class Videos(list):
+
     def __init__(self, cover: str):
         super().__init__()
         self.cover = cover
+
+    def __getitem__(self, i) -> FacebookVideo:
+        return super().__getitem__(i)
+
+    def __iter__(self) -> Generator[FacebookVideo, None, None]:
+        yield from super().__iter__()
 
 
 class Fb(AsyncClient):
@@ -173,7 +182,7 @@ class Fb(AsyncClient):
             'Chrome/101.0.4994.167 Safari/537.36'
         }
 
-    async def from_url(self, url: str) -> list[FacebookVideo]:
+    async def from_url(self, url: str) -> Videos:
         await self.get('https://snapsave.app/id')
         resp = await self.post(
             'https://snapsave.app/action.php?lang=id',
@@ -194,8 +203,8 @@ class Fb(AsyncClient):
         ))
         return await self.extract_content(dec)
 
-    async def extract_content(self, src: str) -> list[FacebookVideo]:
-        data = Videos(Regex.COVER.findall(src)[0])
+    async def extract_content(self, src: str) -> Videos:
+        data = []
         n = Regex.TABLE.findall(src)[0].replace('\\"', '"')
         for url, res, render in zip(
             Regex.URL_FILTER.findall(n),
@@ -214,9 +223,11 @@ class Fb(AsyncClient):
                 translate(render),
                 fsize
             ))
-        return sorted_video(data)
+        data2 = Videos(Regex.COVER.findall(src)[0])
+        data2.extend(sorted_video(data))
+        return data2
 
-    async def from_html(self, html: str) -> list[FacebookVideo]:
+    async def from_html(self, html: str) -> Videos:
         resp = await self.post(
             'https://snapsave.app/download-private-video',
             data={
