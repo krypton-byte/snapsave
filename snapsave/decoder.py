@@ -2,7 +2,6 @@
 # Decryptor For Snaptik/Tikmate Obfuscate
 
 from typing import Union
-import re
 alpha = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
 
 
