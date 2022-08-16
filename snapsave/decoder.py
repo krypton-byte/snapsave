@@ -58,10 +58,3 @@ def decoder(h, u, n, t, e, r):
         r += chr(main(s, e, 10) - t)
         i += 1
     return r
-
-
-def test(s):
-    n=re.findall(r'\<table.*\<\/table\>', s)[0]
-    urls=re.findall(r'(https?://[\w+&=\.%\-_/?;]+)',n)
-    res=[int(i) for i in re.findall(r'>(\w+)p', n)]
-    render = re.findall(r'Tidak|Iya', n)
