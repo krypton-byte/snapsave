@@ -169,12 +169,10 @@ class Fb(AsyncClient):
     async def extract_content(self, src: str):
         data = []
         n = Regex.TABLE.findall(src)[0].replace('\\"','"')
-        print([(Regex.URL_FILTER.findall(n), [int(i) if i.isnumeric() else i.upper() for i in Regex.QUALITY.findall(n)], Regex.RENDER.findall(n))])
         for url, res, render in zip(Regex.URL_FILTER.findall(n), [int(i) if i.isnumeric() else i.upper() for i in Regex.QUALITY.findall(n)], Regex.RENDER.findall(n)):  # type: ignore
             fsize = None
             if Regex.FROM_SNAPAPP.match(url):
                 resp: dict[str, Any] = (await self.get(url)).json()['data']
-                print(resp)
                 url: str = resp['file_path']
                 fsize: Union[None, int] = resp.get('file_size')
             data.append(FacebookVideo(url, Quality.from_res(res), translate(render), fsize))
@@ -196,5 +194,4 @@ class Fb(AsyncClient):
                 **self.headers
             }
         )
-        print(resp.text)
         return await self.extract_content(resp.text)
